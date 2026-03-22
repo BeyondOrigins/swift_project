@@ -260,9 +260,9 @@ struct GoalEditorView: View {
                     }
                 }
                 
-                Section {
-                    previewNotification
-                }
+//                Section {
+//                    previewNotification
+//                }
             }
             .navigationTitle("New Goal")
             .navigationBarTitleDisplayMode(.inline)
@@ -293,32 +293,32 @@ struct GoalEditorView: View {
     
     // MARK: - Preview
     
-    private var previewNotification: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Notification preview")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            
-            HStack(alignment: .top, spacing: 10) {
-                Image(systemName: "bell.fill")
-                    .foregroundStyle(.indigo)
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title.isEmpty ? "My Reading Goal" : title)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                    
-                    Text(previewBody)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .padding(12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.systemGray6))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-        }
-    }
+//    private var previewNotification: some View {
+//        VStack(alignment: .leading, spacing: 8) {
+//            Text("Notification preview")
+//                .font(.caption)
+//                .foregroundStyle(.secondary)
+//            
+//            HStack(alignment: .top, spacing: 10) {
+//                Image(systemName: "bell.fill")
+//                    .foregroundStyle(.indigo)
+//                
+//                VStack(alignment: .leading, spacing: 4) {
+//                    Text(title.isEmpty ? "My Reading Goal" : title)
+//                        .font(.subheadline)
+//                        .fontWeight(.semibold)
+//                    
+//                    Text(previewBody)
+//                        .font(.caption)
+//                        .foregroundStyle(.secondary)
+//                }
+//            }
+//            .padding(12)
+//            .frame(maxWidth: .infinity, alignment: .leading)
+//            .background(Color(.systemGray6))
+//            .clipShape(RoundedRectangle(cornerRadius: 12))
+//        }
+//    }
     
     private var previewBody: String {
         switch goalType {
