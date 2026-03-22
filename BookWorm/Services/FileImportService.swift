@@ -37,15 +37,49 @@ final class FileImportService {
             try FileManager.default.createDirectory(at: booksDir, withIntermediateDirectories: true)
         }
         
-        let destURL = booksDir.appendingPathComponent(sourceURL.lastPathComponent)
+        let fileName = sourceURL.lastPathComponent
+        let destURL = booksDir.appendingPathComponent(fileName)
         
-        // Remove existing file if present
         if FileManager.default.fileExists(atPath: destURL.path) {
             try FileManager.default.removeItem(at: destURL)
         }
         
         try FileManager.default.copyItem(at: sourceURL, to: destURL)
+        
         return destURL
+    }
+
+    static func resolveBookPath(_ savedPath: String) -> URL? {
+        // If global path is saved — take the last 2 components
+        // "Books/filename.pdf"
+        let components = savedPath.components(separatedBy: "/")
+        let relativePath: String
+        
+        if let booksIndex = components.lastIndex(of: "Books"),
+           booksIndex + 1 < components.count {
+            relativePath = components[booksIndex...].joined(separator: "/")
+        } else {
+            relativePath = components.last ?? savedPath
+        }
+        
+        let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let fullURL = documentsDir.appendingPathComponent(relativePath)
+        
+        if FileManager.default.fileExists(atPath: fullURL.path) {
+            return fullURL
+        }
+        
+        // Fallback
+        let justFileName = components.last ?? savedPath
+        let fallbackURL = documentsDir
+            .appendingPathComponent("Books")
+            .appendingPathComponent(justFileName)
+        
+        if FileManager.default.fileExists(atPath: fallbackURL.path) {
+            return fallbackURL
+        }
+        
+        return nil
     }
 }
 

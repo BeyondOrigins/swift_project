@@ -298,6 +298,7 @@ final class BookParserService {
     // MARK: - PDF Parser (basic text extraction)
     
     private func parsePDF(at url: URL) async throws -> ParsedBook {
+        
         let accessing = url.startAccessingSecurityScopedResource()
         defer { if accessing { url.stopAccessingSecurityScopedResource() } }
         

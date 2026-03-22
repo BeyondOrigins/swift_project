@@ -41,20 +41,19 @@ struct DjVuPageView: View {
     private func loadPage() async {
         isLoading = true
         
-        guard let path = book.localFilePath else {
+        guard let path = book.localFilePath,
+              let fileURL = FileImportService.resolveBookPath(path) else {
             isLoading = false
             return
         }
         
         let url = URL(fileURLWithPath: path)
         
-        let image = await Task.detached(priority: .userInitiated) {
-            await BookParserService.shared.getDjVuPageImage(
-                fileURL: url,
-                page: pageIndex,
-                dpi: 300
-            )
-        }.value
+        let image = await DjVuRenderService.shared.renderPage(
+            fileURL: url,
+            page: pageIndex,
+            dpi: 200
+        )
         
         pageImage = image
         isLoading = false

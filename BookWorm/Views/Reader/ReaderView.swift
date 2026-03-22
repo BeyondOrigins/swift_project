@@ -130,6 +130,9 @@ struct ReaderView: View {
         }
         .onDisappear {
             try? context.save()
+            if book.fileFormat == .djvu {
+                Task { await DjVuRenderService.shared.closeDocument() }
+            }
         }
     }
     

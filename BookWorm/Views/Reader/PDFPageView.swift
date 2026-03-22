@@ -96,12 +96,13 @@ struct PDFPageImageView: View {
     private func loadPage() async {
         isLoading = true
         
-        guard let path = book.localFilePath else {
+        guard let path = book.localFilePath,
+              let fileURL = FileImportService.resolveBookPath(path) else {
+            print("PDF: file not found")
             isLoading = false
             return
         }
         
-        let fileURL = URL(fileURLWithPath: path)
         let page = pageIndex
         
         let image = await Task.detached(priority: .userInitiated) {
@@ -113,7 +114,7 @@ struct PDFPageImageView: View {
             
             let pageRect = pdfPage.bounds(for: .mediaBox)
             
-            let scaleFactor: CGFloat = 2.0
+            let scaleFactor: CGFloat = 3.0
             let renderSize = CGSize(
                 width: pageRect.width * scaleFactor,
                 height: pageRect.height * scaleFactor
