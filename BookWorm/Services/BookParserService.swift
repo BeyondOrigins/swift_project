@@ -1,5 +1,5 @@
 import Foundation
-import djvu_swift
+import djvu
 
 // MARK: - Book Parser Service
 

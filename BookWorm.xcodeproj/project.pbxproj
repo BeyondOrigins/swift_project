@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		742320722F704D73007CEDBC /* djvu in Frameworks */ = {isa = PBXBuildFile; productRef = 742320712F704D73007CEDBC /* djvu */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		74C982E82F6FFD1700CF9E23 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				742320722F704D73007CEDBC /* djvu in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -72,12 +77,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		742320702F704D73007CEDBC /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		74C982D12F6FFD1600CF9E23 = {
 			isa = PBXGroup;
 			children = (
 				74C982DC2F6FFD1600CF9E23 /* BookWorm */,
 				74C982EA2F6FFD1700CF9E23 /* BookWormTests */,
 				74C982F42F6FFD1700CF9E23 /* BookWormUITests */,
+				742320702F704D73007CEDBC /* Frameworks */,
 				74C982DB2F6FFD1600CF9E23 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -112,6 +125,7 @@
 			);
 			name = BookWorm;
 			packageProductDependencies = (
+				742320712F704D73007CEDBC /* djvu */,
 			);
 			productName = BookWorm;
 			productReference = 74C982DA2F6FFD1600CF9E23 /* BookWorm.app */;
@@ -590,6 +604,14 @@
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		742320712F704D73007CEDBC /* djvu */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 74C9837D2F70454F00CF9E23 /* XCRemoteSwiftPackageReference "djvu-swift" */;
+			productName = djvu;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 74C982D22F6FFD1600CF9E23 /* Project object */;
 }
