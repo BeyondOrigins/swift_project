@@ -23,7 +23,6 @@ struct NodeGraphView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Canvas background
                 Color(.systemGroupedBackground)
                     .ignoresSafeArea()
                     .onTapGesture {
@@ -32,9 +31,7 @@ struct NodeGraphView: View {
                         connectionEndPoint = nil
                     }
                 
-                // Grid pattern
                 gridPattern
-                
                 // Transformed canvas
                 ZStack {
                     // Connection lines
@@ -118,8 +115,6 @@ struct NodeGraphView: View {
                 }
                 .offset(canvasOffset)
                 .scaleEffect(canvasScale)
-                
-                // Toolbar overlay
                 VStack {
                     Spacer()
                     bottomToolbar
