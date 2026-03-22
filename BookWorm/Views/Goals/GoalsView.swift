@@ -194,7 +194,7 @@ struct GoalEditorView: View {
     @State private var title = ""
     @State private var goalType: GoalType = .dailyPages
     @State private var targetValue: Int = 30
-    @State private var periodDays: Int = 30
+    @State private var periodDays: Int = 7
     @State private var notificationFrequency: Int = 1
     @State private var notificationHour: Int = 10
     @State private var notificationMinute: Int = 0
