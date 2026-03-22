@@ -7,6 +7,7 @@ struct DiscoveryView: View {
     @State private var libraryVM = LibraryViewModel()
     @State private var selectedBook: OnlineBook?
     @State private var addedBookIDs: Set<String> = []
+    @Query private var libraryBooks: [Book]
     
     var body: some View {
         NavigationStack {
@@ -49,14 +50,24 @@ struct DiscoveryView: View {
             .sheet(item: $selectedBook) { book in
                 OnlineBookDetailView(
                     book: book,
-                    isAdded: addedBookIDs.contains(book.id)
-                ) {
-                    Task {
-                        await libraryVM.addOnlineBook(book, context: context)
-                        addedBookIDs.insert(book.id)
+                    isAdded: addedBookIDs.contains(book.id),
+                    onAdd: {
+                        Task {
+                            await libraryVM.addOnlineBook(book, context: context)
+                            addedBookIDs.insert(book.id)
+                        }
+                    },
+                    onRemove: {
+                        removeOnlineBook(book)
                     }
-                }
+                )
                 .presentationDetents([.large])
+            }
+            .onAppear {
+                syncAddedIDs()
+            }
+            .onChange(of: libraryBooks.count) {
+                syncAddedIDs()
             }
             .alert("Error", isPresented: .init(
                 get: { viewModel.errorMessage != nil },
@@ -66,6 +77,23 @@ struct DiscoveryView: View {
             } message: {
                 Text(viewModel.errorMessage ?? "")
             }
+        }
+    }
+
+    // MARK: - Sync online books
+    
+    private func syncAddedIDs() {
+        addedBookIDs = Set(
+            libraryBooks
+                .filter { $0.isFromOnline }
+                .compactMap { $0.onlineIdentifier }
+        )
+    }
+    
+    private func removeOnlineBook(_ onlineBook: OnlineBook) {
+        if let bookToDelete = libraryBooks.first(where: { $0.onlineIdentifier == onlineBook.id }) {
+            libraryVM.deleteBook(bookToDelete, context: context)
+            addedBookIDs.remove(onlineBook.id)
         }
     }
     
@@ -246,6 +274,7 @@ struct OnlineBookDetailView: View {
     let book: OnlineBook
     let isAdded: Bool
     let onAdd: () -> Void
+    let onRemove: () -> Void
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -312,21 +341,24 @@ struct OnlineBookDetailView: View {
                     
                     // Add button
                     Button {
-                        onAdd()
+                        if isAdded {
+                            onRemove()
+                        } else {
+                            onAdd()
+                        }
                         dismiss()
                     } label: {
                         HStack {
-                            Image(systemName: isAdded ? "checkmark" : "plus")
-                            Text(isAdded ? "Already in Library" : "Add to Library")
+                            Image(systemName: isAdded ? "trash" : "plus")
+                            Text(isAdded ? "Remove from Library" : "Add to Library")
                         }
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .background(isAdded ? Color.green : Color.indigo)
+                        .background(isAdded ? Color.red : Color.indigo)
                         .foregroundStyle(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                     }
-                    .disabled(isAdded)
                     .padding(.horizontal)
                     
                     // Preview link
