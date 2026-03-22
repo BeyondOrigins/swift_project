@@ -95,7 +95,6 @@ struct SettingsView: View {
                     }
                     Slider(value: $readerLineSpacing, in: 2...20, step: 1)
                     
-                    Toggle("Dark reader background", isOn: $darkModeReader)
                 }
                 
                 Section("Notifications") {
