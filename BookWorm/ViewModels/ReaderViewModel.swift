@@ -8,7 +8,6 @@ final class ReaderViewModel {
     var pages: [String]
     var fontSize: Double
     var lineSpacing: Double
-    var isDarkMode: Bool
     var isShowingSettings: Bool = false
     var isShowingNoteEditor: Bool = false
         
@@ -24,7 +23,6 @@ final class ReaderViewModel {
         self.pages = book.parsedContent ?? ["No content available."]
         self.fontSize = UserDefaults.standard.double(forKey: "readerFontSize").clamped(to: 12...32, default: 18)
         self.lineSpacing = UserDefaults.standard.double(forKey: "readerLineSpacing").clamped(to: 2...20, default: 8)
-        self.isDarkMode = UserDefaults.standard.bool(forKey: "darkModeReader")
     }
     
     var currentPageText: String {
@@ -79,7 +77,6 @@ final class ReaderViewModel {
     func saveSettings() {
         UserDefaults.standard.set(fontSize, forKey: "readerFontSize")
         UserDefaults.standard.set(lineSpacing, forKey: "readerLineSpacing")
-        UserDefaults.standard.set(isDarkMode, forKey: "darkModeReader")
     }
 }
 

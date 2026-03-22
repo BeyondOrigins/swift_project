@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var selectedTab: Tab = .library
+    @AppStorage("appTheme") private var appTheme: AppTheme = .system
     
     enum Tab: String, CaseIterable {
         case library = "Library"
@@ -54,6 +55,7 @@ struct ContentView: View {
                 .tag(Tab.settings)
         }
         .tint(.indigo)
+        .preferredColorScheme(appTheme.colorScheme)
     }
 }
 
@@ -63,10 +65,19 @@ struct SettingsView: View {
     @AppStorage("readerFontSize") private var readerFontSize: Double = 18
     @AppStorage("readerLineSpacing") private var readerLineSpacing: Double = 8
     @AppStorage("darkModeReader") private var darkModeReader: Bool = false
+    @AppStorage("appTheme") private var appTheme: AppTheme = .system
     
     var body: some View {
         NavigationStack {
             Form {
+                Section("Appearance") {
+                    Picker("Theme", selection: $appTheme) {
+                        ForEach(AppTheme.allCases, id: \.self) { theme in
+                            Label(theme.rawValue, systemImage: theme.icon)
+                                .tag(theme)
+                        }
+                    }
+                }
                 Section("Reader defaults") {
                     HStack {
                         Text("Font size")

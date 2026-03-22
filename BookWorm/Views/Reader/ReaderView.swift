@@ -18,9 +18,6 @@ struct ReaderView: View {
     
     var body: some View {
         ZStack {
-            // Background
-            (viewModel.isDarkMode ? Color.black : Color(.systemBackground))
-                .ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Content area
@@ -41,7 +38,6 @@ struct ReaderView: View {
                         Text(viewModel.currentPageText)
                             .font(.system(size: viewModel.fontSize))
                             .lineSpacing(viewModel.lineSpacing)
-                            .foregroundStyle(viewModel.isDarkMode ? .white : .primary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 20)
                             .padding(.vertical, 16)
@@ -184,7 +180,6 @@ struct ReaderView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 8)
         }
-        .background(viewModel.isDarkMode ? Color(.systemGray6).opacity(0.2) : Color(.systemBackground))
     }
 }
 
@@ -219,19 +214,6 @@ struct ReaderSettingsView: View {
                     }
                 }
                 
-                Section("Appearance") {
-                    Toggle("Dark background", isOn: $viewModel.isDarkMode)
-                }
-                
-                Section("Preview") {
-                    Text("The quick brown fox jumps over the lazy dog. This is how your text will look with the current settings.")
-                        .font(.system(size: viewModel.fontSize))
-                        .lineSpacing(viewModel.lineSpacing)
-                        .padding(8)
-                        .background(viewModel.isDarkMode ? Color.black : Color(.systemBackground))
-                        .foregroundStyle(viewModel.isDarkMode ? .white : .primary)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                }
             }
             .navigationTitle("Reader Settings")
             .navigationBarTitleDisplayMode(.inline)
