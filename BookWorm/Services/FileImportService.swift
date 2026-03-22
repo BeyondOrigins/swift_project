@@ -13,7 +13,8 @@ final class FileImportService {
         .xml,                 // .fb2 (XML-based)
         .pdf,                 // .pdf
         .epub,                // .epub
-        .data                 // .djvu and other binary
+        .djvu,                // .djvu
+        .data                 // fallback binary
     ]
     
     static let supportedExtensions: Set<String> = [
@@ -52,4 +53,5 @@ final class FileImportService {
 
 extension UTType {
     static let epub = UTType(importedAs: "org.idpf.epub-container")
+    static let djvu = UTType(filenameExtension: "djvu") ?? .data
 }

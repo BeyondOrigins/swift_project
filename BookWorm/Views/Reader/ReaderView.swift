@@ -25,13 +25,22 @@ struct ReaderView: View {
             VStack(spacing: 0) {
                 // Content area
                 ScrollView {
-                    Text(viewModel.currentPageText)
-                        .font(.system(size: viewModel.fontSize))
-                        .lineSpacing(viewModel.lineSpacing)
-                        .foregroundStyle(viewModel.isDarkMode ? .white : .primary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 16)
+                    if viewModel.currentPageText.hasPrefix("[DJVU_PAGE:") {
+                        // DjVu — рендерим как картинку
+                        DjVuPageView(
+                            book: book,
+                            pageIndex: viewModel.currentPageIndex
+                        )
+                        .padding(8)
+                    } else {
+                        Text(viewModel.currentPageText)
+                            .font(.system(size: viewModel.fontSize))
+                            .lineSpacing(viewModel.lineSpacing)
+                            .foregroundStyle(viewModel.isDarkMode ? .white : .primary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 16)
+                    }
                 }
                 .gesture(
                     DragGesture(minimumDistance: 50)
@@ -50,7 +59,6 @@ struct ReaderView: View {
                 
                 Divider()
                 
-                // Bottom bar
                 bottomBar
             }
         }

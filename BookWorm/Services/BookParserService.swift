@@ -1,4 +1,5 @@
 import Foundation
+import djvu_swift
 
 // MARK: - Book Parser Service
 
@@ -18,13 +19,7 @@ final class BookParserService {
         case .pdf:
             return try await parsePDF(at: url)
         case .djvu:
-            // DjVu requires native C library bridge — fallback to placeholder
-            return ParsedBook(
-                title: url.deletingPathExtension().lastPathComponent,
-                author: "Unknown",
-                content: ["DjVu format requires DjVuLibre integration. This is a placeholder."],
-                coverData: nil
-            )
+            return try await parseDjVu(at: url)
         }
     }
     
@@ -116,6 +111,40 @@ final class BookParserService {
         )
     }
     
+    // MARK: - DjVu Parser
+
+    private func parseDjVu(at url: URL) async throws -> ParsedBook {
+        let accessing = url.startAccessingSecurityScopedResource()
+        defer { if accessing { url.stopAccessingSecurityScopedResource() } }
+        
+        let djvu = try Djvu(url: url)
+        let pageCount = djvu.numberOfPages
+        
+        guard pageCount > 0 else {
+            throw ParserError.parsingFailed("DjVu file has no pages")
+        }
+        
+        // DjVu — это сканы, текста внутри может не быть.
+        // Рендерим каждую страницу в UIImage, а в parsedContent
+        // кладём маркер "[IMAGE_PAGE:индекс]" — ReaderView
+        // будет рендерить картинки вместо текста.
+        var pages: [String] = []
+        for i in 0..<pageCount {
+            pages.append("[DJVU_PAGE:\(i)]")
+        }
+        
+        // Обложка — первая страница
+        let coverImage = try? djvu.getImage(page: 0, dpi: 150, maxSideSize: 640)
+        let coverData = coverImage?.jpegData(compressionQuality: 0.7)
+        
+        return ParsedBook(
+            title: url.deletingPathExtension().lastPathComponent,
+            author: "Unknown",
+            content: pages,
+            coverData: coverData
+        )
+    }
+    
     // MARK: - Helpers
     
     func splitIntoPages(_ text: String, charsPerPage: Int = 2000) -> [String] {
@@ -165,6 +194,11 @@ final class BookParserService {
             .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
         
         return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    func getDjVuPageImage(fileURL: URL, page: Int, dpi: Int = 300) -> UIImage? {
+        guard let djvu = try? Djvu(url: fileURL) else { return nil }
+        return try? djvu.getImage(page: page, dpi: dpi)
     }
 }
 

@@ -139,17 +139,6 @@ struct GoalCardView: View {
                 .foregroundStyle(.secondary)
             }
             
-            // Motivational message
-            Text(goal.motivationalMessage)
-                .font(.caption)
-                .foregroundStyle(goal.isOnTrack ? .green : .orange)
-                .padding(.vertical, 4)
-                .padding(.horizontal, 10)
-                .background(
-                    (goal.isOnTrack ? Color.green : Color.orange).opacity(0.1)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-            
             // Stats row
             HStack(spacing: 16) {
                 if goal.goalType == .periodBooks {

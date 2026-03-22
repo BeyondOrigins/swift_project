@@ -1,0 +1,15 @@
+{
+  "originHash" : "adae44dc9e8e86e27e0f24685334520ee96e31fa11a038e4858742becd147fbf",
+  "pins" : [
+    {
+      "identity" : "djvu-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/awxkee/djvu-swift",
+      "state" : {
+        "revision" : "27e91ba8c003bba480e3156f6bdc271e57485540",
+        "version" : "1.0.6"
+      }
+    }
+  ],
+  "version" : 3
+}
