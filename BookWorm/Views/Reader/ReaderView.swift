@@ -26,8 +26,13 @@ struct ReaderView: View {
                 // Content area
                 ScrollView {
                     if viewModel.currentPageText.hasPrefix("[DJVU_PAGE:") {
-                        // DjVu — рендерим как картинку
                         DjVuPageView(
+                            book: book,
+                            pageIndex: viewModel.currentPageIndex
+                        )
+                        .padding(8)
+                    } else if viewModel.currentPageText.hasPrefix("[PDF_PAGE:") {
+                        PDFPageImageView(
                             book: book,
                             pageIndex: viewModel.currentPageIndex
                         )

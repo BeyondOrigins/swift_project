@@ -317,31 +317,61 @@ final class BookParserService {
         let accessing = url.startAccessingSecurityScopedResource()
         defer { if accessing { url.stopAccessingSecurityScopedResource() } }
         
-        guard let document = CGPDFDocument(url as CFURL) else {
+        guard let document = PDFDocument(url: url) else {
             throw ParserError.invalidFile
         }
         
+        let pageCount = document.pageCount
+        guard pageCount > 0 else {
+            throw ParserError.parsingFailed("PDF has no pages")
+        }
+        
+        // Try to extract text
         var fullText = ""
-        for i in 1...document.numberOfPages {
-            guard let page = document.page(at: i) else { continue }
-            // Basic PDF text extraction using CGPDFPage
-            // For production, use PDFKit's PDFDocument.string
-            let _ = page.getBoxRect(.mediaBox)
-            fullText += "[Page \(i)]\n\n"
+        for i in 0..<pageCount {
+            if let page = document.page(at: i), let text = page.string {
+                let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmed.isEmpty {
+                    fullText += trimmed + "\n\n"
+                }
+            }
         }
         
-        // Use PDFKit for better extraction
-        if let pdfDoc = PDFDocumentWrapper(url: url) {
-            fullText = pdfDoc.extractText()
+        // If there is text - do everything as usual
+        if !fullText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            let pages = splitIntoPages(fullText)
+            return ParsedBook(
+                title: extractPDFTitle(from: document) ?? url.deletingPathExtension().lastPathComponent,
+                author: extractPDFAuthor(from: document) ?? "Unknown",
+                content: pages,
+                coverData: nil
+            )
         }
         
-        let pages = splitIntoPages(fullText)
+        // If no text — same as DjVu
+        var pages: [String] = []
+        for i in 0..<pageCount {
+            pages.append("[PDF_PAGE:\(i)]")
+        }
+        
         return ParsedBook(
-            title: url.deletingPathExtension().lastPathComponent,
-            author: "Unknown",
-            content: pages.isEmpty ? ["Could not extract text from PDF."] : pages,
+            title: extractPDFTitle(from: document) ?? url.deletingPathExtension().lastPathComponent,
+            author: extractPDFAuthor(from: document) ?? "Unknown",
+            content: pages,
             coverData: nil
         )
+    }
+
+    // MARK: - PDF Metadata Helpers
+
+    private func extractPDFTitle(from document: PDFDocument) -> String? {
+        guard let attributes = document.documentAttributes else { return nil }
+        return attributes[PDFDocumentAttribute.titleAttribute] as? String
+    }
+
+    private func extractPDFAuthor(from document: PDFDocument) -> String? {
+        guard let attributes = document.documentAttributes else { return nil }
+        return attributes[PDFDocumentAttribute.authorAttribute] as? String
     }
     
     // MARK: - DjVu Parser
@@ -509,29 +539,6 @@ final class FB2Parser: NSObject, XMLParserDelegate {
         default:
             break
         }
-    }
-}
-
-// MARK: - PDF Wrapper
-
-import PDFKit
-
-struct PDFDocumentWrapper {
-    private let document: PDFDocument
-    
-    init?(url: URL) {
-        guard let doc = PDFDocument(url: url) else { return nil }
-        self.document = doc
-    }
-    
-    func extractText() -> String {
-        var text = ""
-        for i in 0..<document.pageCount {
-            if let page = document.page(at: i), let pageText = page.string {
-                text += pageText + "\n\n"
-            }
-        }
-        return text
     }
 }
 
