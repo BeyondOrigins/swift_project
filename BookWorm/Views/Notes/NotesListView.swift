@@ -6,7 +6,7 @@ struct NotesListView: View {
     @State private var viewModel = NotesViewModel()
     @State private var showingEditor = false
     @State private var selectedNote: BookNote?
-    @State private var showGraphFor: BookNote?
+    @State private var graphNote: BookNote?
     @State private var searchText = ""
     
     var filteredNotes: [BookNote] {
@@ -40,12 +40,12 @@ struct NotesListView: View {
                 }
             }
             .sheet(isPresented: $showingEditor) {
-                NoteEditorView(viewModel: viewModel, context: context, note: nil, book: nil)
+                NoteEditorView(viewModel: viewModel, context: context, note: nil)
             }
             .sheet(item: $selectedNote) { note in
-                NoteEditorView(viewModel: viewModel, context: context, note: note, book: note.book)
+                NoteEditorView(viewModel: viewModel, context: context, note: note)
             }
-            .fullScreenCover(item: $showGraphFor) { note in
+            .fullScreenCover(item: $graphNote) { note in
                 NodeGraphView(note: note, viewModel: viewModel, context: context)
             }
             .task {
@@ -59,26 +59,49 @@ struct NotesListView: View {
     private var notesList: some View {
         List {
             ForEach(filteredNotes) { note in
-                NoteRowView(note: note)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        selectedNote = note
-                    }
-                    .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            viewModel.deleteNote(note, context: context)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
+                VStack(spacing: 0) {
+                    NoteRowView(note: note)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            selectedNote = note
                         }
-                    }
-                    .swipeActions(edge: .leading) {
-                        Button {
-                            showGraphFor = note
-                        } label: {
-                            Label("Graph", systemImage: "point.3.connected.trianglepath.dotted")
+                    Button {
+                        graphNote = note
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "point.3.connected.trianglepath.dotted")
+                                .font(.caption)
+                            Text("Open Graph")
+                                .font(.caption)
+                            
+                            Spacer()
+                            
+                            if let nodeCount = note.nodes?.count, nodeCount > 0 {
+                                Text("\(nodeCount) nodes")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                            
+                            Image(systemName: "chevron.right")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
                         }
-                        .tint(.purple)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Color.purple.opacity(0.08))
+                        .foregroundStyle(.purple)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
+                    .buttonStyle(.plain)
+                    .padding(.top, 6)
+                }
+                .swipeActions(edge: .trailing) {
+                    Button(role: .destructive) {
+                        viewModel.deleteNote(note, context: context)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
             }
         }
         .listStyle(.insetGrouped)
@@ -134,16 +157,6 @@ struct NoteRowView: View {
                     .lineLimit(1)
                 
                 Spacer()
-                
-                if let nodeCount = note.nodes?.count, nodeCount > 0 {
-                    Label("\(nodeCount)", systemImage: "point.3.connected.trianglepath.dotted")
-                        .font(.caption2)
-                        .foregroundStyle(.purple)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.purple.opacity(0.1))
-                        .clipShape(Capsule())
-                }
             }
             
             if !note.content.isEmpty {
