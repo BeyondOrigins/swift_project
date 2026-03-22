@@ -42,12 +42,10 @@ struct DjVuPageView: View {
         isLoading = true
         
         guard let path = book.localFilePath,
-              let fileURL = FileImportService.resolveBookPath(path) else {
+              let url = FileImportService.resolveBookPath(path) else {
             isLoading = false
             return
         }
-        
-        let url = URL(fileURLWithPath: path)
         
         let image = await DjVuRenderService.shared.renderPage(
             fileURL: url,
