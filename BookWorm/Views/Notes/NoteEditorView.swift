@@ -5,11 +5,13 @@ struct NoteEditorView: View {
     @Bindable var viewModel: NotesViewModel
     let context: ModelContext
     let note: BookNote?
-    let book: Book?
+    
+    @Query(sort: \Book.title) private var allBooks: [Book]
     
     @State private var title: String
     @State private var content: String
     @State private var selectedColor: String
+    @State private var selectedBook: Book?
     @Environment(\.dismiss) private var dismiss
     
     private let colorOptions = [
@@ -23,14 +25,14 @@ struct NoteEditorView: View {
         "#06B6D4", // cyan
     ]
     
-    init(viewModel: NotesViewModel, context: ModelContext, note: BookNote?, book: Book?) {
+    init(viewModel: NotesViewModel, context: ModelContext, note: BookNote?, book: Book? = nil) {
         self.viewModel = viewModel
         self.context = context
         self.note = note
-        self.book = book
         self._title = State(initialValue: note?.title ?? "")
         self._content = State(initialValue: note?.content ?? "")
         self._selectedColor = State(initialValue: note?.colorHex ?? "#6366F1")
+        self._selectedBook = State(initialValue: book ?? note?.book)
     }
     
     var body: some View {
@@ -40,14 +42,15 @@ struct NoteEditorView: View {
                     TextField("Note title", text: $title)
                         .font(.headline)
                     
-                    if let book = book ?? note?.book {
-                        HStack {
-                            Image(systemName: "book.closed.fill")
-                                .foregroundStyle(.blue)
+                    Picker(selection: $selectedBook) {
+                        Text("No book")
+                            .tag(nil as Book?)
+                        ForEach(allBooks) { book in
                             Text(book.title)
-                                .foregroundStyle(.secondary)
+                                .tag(book as Book?)
                         }
-                        .font(.caption)
+                    } label: {
+                        Label("Book", systemImage: "book.closed.fill")
                     }
                 }
                 
@@ -101,11 +104,12 @@ struct NoteEditorView: View {
     private func saveNote() {
         if let note = note {
             viewModel.updateNote(note, title: title, content: content, context: context)
+            note.book = selectedBook
             note.colorHex = selectedColor
             try? context.save()
         } else {
             let newNote = BookNote(
-                book: book,
+                book: selectedBook,
                 title: title,
                 content: content,
                 colorHex: selectedColor
