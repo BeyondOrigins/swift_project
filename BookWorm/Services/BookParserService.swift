@@ -7,7 +7,6 @@ final class BookParserService {
     static let shared = BookParserService()
     private init() {}
     
-    /// Parse a book file and return array of text "pages" (each ~2000 chars)
     func parseBook(at url: URL, format: BookFormat) async throws -> ParsedBook {
         switch format {
         case .fb2:
@@ -124,16 +123,11 @@ final class BookParserService {
             throw ParserError.parsingFailed("DjVu file has no pages")
         }
         
-        // DjVu — это сканы, текста внутри может не быть.
-        // Рендерим каждую страницу в UIImage, а в parsedContent
-        // кладём маркер "[IMAGE_PAGE:индекс]" — ReaderView
-        // будет рендерить картинки вместо текста.
         var pages: [String] = []
         for i in 0..<pageCount {
             pages.append("[DJVU_PAGE:\(i)]")
         }
         
-        // Обложка — первая страница
         let coverImage = try? djvu.getImage(page: 0, dpi: 150, maxSideSize: 640)
         let coverData = coverImage?.jpegData(compressionQuality: 0.7)
         
