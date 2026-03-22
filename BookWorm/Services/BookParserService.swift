@@ -42,7 +42,7 @@ final class BookParserService {
         let accessing = url.startAccessingSecurityScopedResource()
         defer { if accessing { url.stopAccessingSecurityScopedResource() } }
         
-        // 1. Распаковываем ZIP
+        // Unpack zip
         let tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("epub_\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
@@ -50,7 +50,7 @@ final class BookParserService {
         
         try unzipFile(at: url, to: tempDir)
         
-        // 2. Читаем container.xml → путь к .opf
+        // Read container.xml -> path to .opf
         let containerURL = tempDir
             .appendingPathComponent("META-INF")
             .appendingPathComponent("container.xml")
@@ -67,14 +67,13 @@ final class BookParserService {
             throw ParserError.parsingFailed("Could not find OPF path in container.xml")
         }
         
-        // 3. Читаем .opf → metadata + spine + manifest
+        // Read .opf -> metadata + spine + manifest
         let opfURL = tempDir.appendingPathComponent(opfPath)
         let opfDir = opfURL.deletingLastPathComponent()
         let opfData = try Data(contentsOf: opfURL)
         let opfParser = EPUBOPFParser(data: opfData)
         opfParser.parse()
         
-        // 4. Читаем главы в порядке spine
         var fullText = ""
         for spineIdref in opfParser.spineIdrefs {
             guard let href = opfParser.manifestItems[spineIdref] else { continue }
@@ -109,10 +108,6 @@ final class BookParserService {
     // MARK: - ZIP Extraction (Foundation-only, no external deps)
 
     private func unzipFile(at sourceURL: URL, to destURL: URL) throws {
-        // Используем Process/FileHandle нельзя на iOS,
-        // поэтому используем встроенный Archive из Apple
-        // Через FileManager + координатор
-        
         let coordinator = NSFileCoordinator()
         var coordinatorError: NSError?
         
@@ -121,13 +116,7 @@ final class BookParserService {
             options: [.forUploading],
             error: &coordinatorError
         ) { tempURL in
-            // .forUploading автоматически разархивирует
-            // Не работает для EPUB, используем ручной метод
         }
-        
-        // Ручная распаковка ZIP через libz (доступна на iOS)
-        // Foundation не даёт прямого API, но можно через shell-free метод:
-        // Читаем ZIP и извлекаем через Archive (iOS 16+)
         
         if #available(iOS 16.0, *) {
             try unzipWithAppleArchive(at: sourceURL, to: destURL)
@@ -138,8 +127,6 @@ final class BookParserService {
 
     @available(iOS 16.0, *)
     private func unzipWithAppleArchive(at sourceURL: URL, to destURL: URL) throws {
-        // Используем простой подход: копируем как .zip и извлекаем
-        // через Foundation's built-in ZIP support
         
         guard let archive = try? Data(contentsOf: sourceURL) else {
             throw ParserError.parsingFailed("Cannot read EPUB file")
@@ -154,14 +141,12 @@ final class BookParserService {
         }
         try extractZipData(archive, to: destURL)
     }
-
-    /// Минимальный ZIP-экстрактор без внешних зависимостей
     private func extractZipData(_ data: Data, to directory: URL) throws {
         let fm = FileManager.default
         var offset = 0
         
         while offset + 30 <= data.count {
-            // Ищем Local File Header signature: PK\x03\x04
+            // Search for Local File Header signature: PK\x03\x04
             let sig = data.subdata(in: offset..<offset+4)
             guard sig == Data([0x50, 0x4B, 0x03, 0x04]) else { break }
             
@@ -190,10 +175,10 @@ final class BookParserService {
             let destPath = directory.appendingPathComponent(fileName)
             
             if fileName.hasSuffix("/") {
-                // Это директория
+                // This is directory
                 try fm.createDirectory(at: destPath, withIntermediateDirectories: true)
             } else {
-                // Это файл
+                // This is file
                 try fm.createDirectory(
                     at: destPath.deletingLastPathComponent(),
                     withIntermediateDirectories: true
@@ -201,7 +186,7 @@ final class BookParserService {
                 
                 let fileData: Data
                 if compressionMethod == 0 {
-                    // Stored (без сжатия)
+                    // Stored
                     fileData = data.subdata(in: dataStart..<dataStart+compressedSize)
                 } else if compressionMethod == 8 {
                     // Deflate
@@ -222,10 +207,9 @@ final class BookParserService {
         }
     }
 
-    /// Deflate-декомпрессия через встроенный zlib (всегда есть на iOS)
     private func decompressDeflate(_ data: Data, expectedSize: Int) -> Data? {
         
-        // Используем Compression framework (встроен в iOS)
+        // Use Compression framework (iOS built-in)
         let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: max(expectedSize, 1))
         defer { buffer.deallocate() }
         
@@ -248,7 +232,7 @@ final class BookParserService {
     // MARK: - HTML Stripping
 
     private func stripHTMLTags(_ html: String) -> String {
-        // Заменяем блочные элементы переносами строк
+        // Replace block elements with line breaks
         var text = html
         let blockTags = ["</p>", "</div>", "</h1>", "</h2>", "</h3>",
                          "</h4>", "</h5>", "</h6>", "<br>", "<br/>", "<br />"]
@@ -256,14 +240,14 @@ final class BookParserService {
             text = text.replacingOccurrences(of: tag, with: "\n", options: .caseInsensitive)
         }
         
-        // Убираем все оставшиеся теги
+        // Delete all other tags
         text = text.replacingOccurrences(
             of: "<[^>]+>",
             with: "",
             options: .regularExpression
         )
         
-        // Декодируем HTML entities
+        // Decode HTML entities
         text = text.replacingOccurrences(of: "&nbsp;", with: " ")
         text = text.replacingOccurrences(of: "&amp;", with: "&")
         text = text.replacingOccurrences(of: "&lt;", with: "<")
@@ -279,7 +263,7 @@ final class BookParserService {
         text = text.replacingOccurrences(of: "&#8220;", with: "\u{201C}")
         text = text.replacingOccurrences(of: "&#8221;", with: "\u{201D}")
         
-        // Убираем множественные пробелы и пустые строки
+        // Delete multiple spaces and blank lines
         text = text.replacingOccurrences(
             of: "[ \t]+",
             with: " ",

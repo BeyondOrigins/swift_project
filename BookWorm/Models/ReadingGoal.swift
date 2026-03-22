@@ -6,14 +6,14 @@ final class ReadingGoal {
     var id: UUID
     var title: String
     var goalType: GoalType
-    var targetValue: Int          // pages per day OR books per period
-    var currentValue: Int         // pages read today OR books finished
-    var periodDays: Int           // duration in days (1 for daily, 30 for monthly, etc.)
+    var targetValue: Int          // Pages per day OR books per period
+    var currentValue: Int         // Pages read today OR books finished
+    var periodDays: Int           // Duration in days (1 for daily, 30 for monthly, etc.)
     var startDate: Date
     var endDate: Date
     var notificationEnabled: Bool
-    var notificationFrequencyDays: Int  // how often to send reminders
-    var notificationHour: Int           // hour of day to send (0-23)
+    var notificationFrequencyDays: Int  // How often to send reminders
+    var notificationHour: Int           // Hour of day to send (0-23)
     var notificationMinute: Int
     var isActive: Bool
     var createdAt: Date
