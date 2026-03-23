@@ -183,13 +183,11 @@ struct NodeGraphView: View {
                     }
                 }
             }
-            .sheet(isPresented: $showNodeEditor) {
-                if let node = editingNode {
-                    NodeEditorSheet(node: node, context: context) {
-                        refreshNodes()
-                    }
-                    .presentationDetents([.medium])
+            .sheet(item: $editingNode) { node in
+                NodeEditorSheet(node: node, context: context) {
+                    refreshNodes()
                 }
+                .presentationDetents([.medium])
             }
             .sheet(isPresented: $showConnections) {
                 if let node = selectedNode {
@@ -238,92 +236,109 @@ struct NodeGraphView: View {
     // MARK: - Bottom Toolbar
     
     private var bottomToolbar: some View {
-        HStack(spacing: 16) {
-            Button {
-                addNodeAtCenter()
-            } label: {
-                Label("", systemImage: "plus.circle.fill")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
+        HStack(spacing: 8) {
+            Button { addNodeAtCenter() } label: {
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 24))
             }
+            .tint(.indigo)
             
-            if let selected = selectedNode {
-                Button {
-                    connectingFrom = selected
-                } label: {
-                    Label("", systemImage: "link")
-                        .font(.subheadline)
-                }
-                .tint(.purple)
-                
-                Button {
-                    showConnections = true
-                } label: {
-                    HStack(spacing: 3) {
-                        Image(systemName: "link.badge.plus")
-                        Text("\(selected.connectedNodeIDs.count)")
+            Divider().frame(height: 28)
+                .opacity(selectedNode != nil ? 1 : 0)
+            
+            Button { if let s = selectedNode { connectingFrom = s } } label: {
+                Image(systemName: "link")
+                    .font(.system(size: 20))
+            }
+            .tint(.purple)
+            .opacity(selectedNode != nil ? 1 : 0)
+            .disabled(selectedNode == nil)
+            
+            Button { showConnections = true } label: {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: "link.badge.plus")
+                        .font(.system(size: 20))
+                    if let count = selectedNode?.connectedNodeIDs.count, count > 0 {
+                        Text("\(count)")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 16, height: 16)
+                            .background(Color.orange)
+                            .clipShape(Circle())
+                            .offset(x: 6, y: -6)
                     }
-                    .font(.subheadline)
                 }
-                .tint(.orange)
-                .disabled(selected.connectedNodeIDs.isEmpty)
-                
-                Button {
-                    editingNode = selected
-                    showNodeEditor = true
-                } label: {
-                    Label("", systemImage: "pencil")
-                        .font(.subheadline)
-                }
-                .tint(.blue)
-                
-                Button {
-                    viewModel.deleteNode(selected, allNodes: nodes, context: context)
+            }
+            .tint(.orange)
+            .opacity(selectedNode != nil ? 1 : 0)
+            .disabled(selectedNode == nil || (selectedNode?.connectedNodeIDs.isEmpty ?? true))
+            
+            Button { if let s = selectedNode { editingNode = s } } label: {
+                Image(systemName: "pencil")
+                    .font(.system(size: 20))
+            }
+            .tint(.blue)
+            .opacity(selectedNode != nil ? 1 : 0)
+            .disabled(selectedNode == nil)
+            
+            Button {
+                if let node = selectedNode {
+                    viewModel.deleteNode(node, allNodes: nodes, context: context)
                     selectedNode = nil
                     refreshNodes()
-                } label: {
-                    Label("", systemImage: "trash")
-                        .font(.subheadline)
                 }
-                .tint(.red)
+            } label: {
+                Image(systemName: "trash")
+                    .font(.system(size: 20))
             }
+            .tint(.red)
+            .opacity(selectedNode != nil ? 1 : 0)
+            .disabled(selectedNode == nil)
             
             if connectingFrom != nil {
                 Button {
                     connectingFrom = nil
                     connectionEndPoint = nil
                 } label: {
-                    Label("", systemImage: "xmark")
-                        .font(.subheadline)
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 20))
                 }
                 .tint(.red)
             }
             
             Spacer()
             
-            // Zoom controls
-            HStack(spacing: 8) {
+            HStack(spacing: 12) {
                 Button {
                     withAnimation { canvasScale = max(0.3, canvasScale - 0.2) }
                 } label: {
-                    Image(systemName: "minus.magnifyingglass")
+                    Image(systemName: "minus")
+                        .font(.system(size: 16, weight: .medium))
                 }
                 
                 Text("\(Int(canvasScale * 100))%")
-                    .font(.caption)
-                    .monospacedDigit()
-                    .frame(width: 42)
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .frame(width: 38, alignment: .center)
+                    .foregroundStyle(.secondary)
                 
                 Button {
                     withAnimation { canvasScale = min(3.0, canvasScale + 0.2) }
                 } label: {
-                    Image(systemName: "plus.magnifyingglass")
+                    Image(systemName: "plus")
+                        .font(.system(size: 16, weight: .medium))
                 }
             }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color(.systemGray5).opacity(0.6))
+            .clipShape(Capsule())
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
-        .background(.ultraThinMaterial)
+        .animation(.easeInOut(duration: 0.15), value: selectedNode?.id)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .padding(.horizontal, 8)
+        .padding(.bottom, 4)
     }
     
     // MARK: - Helpers
