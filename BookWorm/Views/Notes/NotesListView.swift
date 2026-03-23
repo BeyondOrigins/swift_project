@@ -48,6 +48,11 @@ struct NotesListView: View {
             .fullScreenCover(item: $graphNote) { note in
                 NodeGraphView(note: note, viewModel: viewModel, context: context)
             }
+            .onChange(of: graphNote) {
+                if graphNote == nil {
+                    viewModel.fetchNotes(context: context)
+                }
+            }
             .task {
                 viewModel.fetchNotes(context: context)
             }

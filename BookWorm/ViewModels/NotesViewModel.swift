@@ -76,6 +76,7 @@ final class NotesViewModel {
             positionY: y
         )
         context.insert(node)
+        node.note?.updatedAt = Date()
         try? context.save()
         return node
     }
@@ -87,17 +88,19 @@ final class NotesViewModel {
         if !nodeB.connectedNodeIDs.contains(nodeA.id) {
             nodeB.connectedNodeIDs.append(nodeA.id)
         }
+        nodeA.note?.updatedAt = Date()
         try? context.save()
     }
     
     func disconnectNodes(_ nodeA: NoteNode, from nodeB: NoteNode, context: ModelContext) {
         nodeA.connectedNodeIDs.removeAll { $0 == nodeB.id }
         nodeB.connectedNodeIDs.removeAll { $0 == nodeA.id }
+        nodeA.note?.updatedAt = Date()
         try? context.save()
     }
     
     func deleteNode(_ node: NoteNode, allNodes: [NoteNode], context: ModelContext) {
-        // Remove references from connected nodes
+        node.note?.updatedAt = Date()
         for otherNode in allNodes where otherNode.connectedNodeIDs.contains(node.id) {
             otherNode.connectedNodeIDs.removeAll { $0 == node.id }
         }
