@@ -54,8 +54,3 @@ final class DiscoveryViewModel {
         isSearching = false
     }
 }
-
-// Make OnlineSource CaseIterable
-extension OnlineSource: CaseIterable {
-    static var allCases: [OnlineSource] = [.googleBooks, .openLibrary, .gutenberg]
-}

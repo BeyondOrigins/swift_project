@@ -65,7 +65,6 @@ final class GoalsViewModel {
         try? context.save()
         
         if goal.currentValue >= goal.targetValue {
-            // Отправляем финальное уведомление и удаляем
             NotificationService.shared.scheduleOneTimeReminder(
                 title: "\(goal.title)",
                 body: "🎉 Goal completed! You did it — \(goal.targetValue) \(goal.goalType.unitLabel)!",

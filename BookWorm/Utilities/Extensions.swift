@@ -61,3 +61,9 @@ extension String {
         return String(prefix(maxLength)) + trailing
     }
 }
+
+// MARK: - Make OnlineSource CaseIterable
+
+extension OnlineSource: CaseIterable {
+    static var allCases: [OnlineSource] = [.googleBooks, .openLibrary, .gutenberg]
+}
