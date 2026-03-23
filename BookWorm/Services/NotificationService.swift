@@ -21,7 +21,6 @@ final class NotificationService {
     // MARK: - Schedule Goal Notifications
     
     func scheduleGoalNotifications(for goal: ReadingGoal) {
-        // Remove old notifications for this goal
         removeNotifications(for: goal.id)
         
         guard goal.notificationEnabled, goal.isActive else { return }

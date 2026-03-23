@@ -348,21 +348,3 @@ struct GutenbergAuthor: Decodable {
         case deathYear = "death_year"
     }
 }
-
-// MARK: - Errors
-
-enum APIError: LocalizedError {
-    case invalidURL
-    case networkError(String)
-    case httpError(Int)
-    case decodingFailed
-    
-    var errorDescription: String? {
-        switch self {
-        case .invalidURL: return "Invalid URL"
-        case .networkError(let msg): return "Network error: \(msg)"
-        case .httpError(let code): return "HTTP error: \(code)"
-        case .decodingFailed: return "Failed to decode response"
-        }
-    }
-}

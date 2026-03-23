@@ -1,10 +1,3 @@
-//
-//  XMLParser.swift
-//  BookWorm
-//
-//  Created by beyondorigins on 22.03.2026.
-//
-
 import Foundation
 import Compression
 import PDFKit

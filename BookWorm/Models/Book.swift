@@ -62,33 +62,3 @@ final class Book {
         self.bookDescription = bookDescription
     }
 }
-
-// MARK: - Enums
-
-enum BookFormat: String, Codable, CaseIterable {
-    case fb2 = "fb2"
-    case epub = "epub"
-    case txt = "txt"
-    case djvu = "djvu"
-    case pdf = "pdf"
-    
-    var displayName: String {
-        rawValue.uppercased()
-    }
-    
-    var utType: String {
-        switch self {
-        case .fb2: return "public.xml"
-        case .epub: return "org.idpf.epub-container"
-        case .txt: return "public.plain-text"
-        case .djvu: return "public.data"
-        case .pdf: return "com.adobe.pdf"
-        }
-    }
-}
-
-enum OnlineSource: String, Codable {
-    case googleBooks = "Google Books"
-    case openLibrary = "Open Library"
-    case gutenberg = "Project Gutenberg"
-}

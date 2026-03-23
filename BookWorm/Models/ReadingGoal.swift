@@ -82,22 +82,3 @@ final class ReadingGoal {
         self.createdAt = Date()
     }
 }
-
-enum GoalType: String, Codable, CaseIterable {
-    case dailyPages = "Daily pages"
-    case periodBooks = "Books in period"
-    
-    var icon: String {
-        switch self {
-        case .dailyPages: return "doc.text"
-        case .periodBooks: return "book.closed.fill"
-        }
-    }
-    
-    var unitLabel: String {
-        switch self {
-        case .dailyPages: return "pages"
-        case .periodBooks: return "books"
-        }
-    }
-}
