@@ -16,6 +16,8 @@ struct NodeGraphView: View {
     @State private var canvasOffset: CGSize = .zero
     @State private var canvasScale: CGFloat = 1.0
     @State private var lastDragOffset: CGSize = .zero
+    @State private var showConnections = false
+    @State private var draggingNode: NoteNode?
     
     // Temporary connection line endpoint
     @State private var connectionEndPoint: CGPoint?
@@ -32,7 +34,30 @@ struct NodeGraphView: View {
                     }
                 
                 gridPattern
-                // Transformed canvas
+                
+                Color.clear
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture(minimumDistance: 10)
+                            .onChanged { value in
+                                canvasOffset = CGSize(
+                                    width: lastDragOffset.width + value.translation.width,
+                                    height: lastDragOffset.height + value.translation.height
+                                )
+                            }
+                            .onEnded { _ in
+                                lastDragOffset = canvasOffset
+                            }
+                    )
+                    .simultaneousGesture(
+                        MagnifyGesture()
+                            .onChanged { value in
+                                canvasScale = max(0.3, min(value.magnification, 3.0))
+                            }
+                    )
+                    .allowsHitTesting(draggingNode == nil)
+                
+                // Canvas
                 ZStack {
                     // Connection lines
                     ForEach(nodes) { node in
@@ -47,7 +72,6 @@ struct NodeGraphView: View {
                         }
                     }
                     
-                    // Temporary connection line while connecting
                     if let from = connectingFrom, let endPoint = connectionEndPoint {
                         ConnectionLine(
                             from: CGPoint(x: from.positionX, y: from.positionY),
@@ -65,18 +89,12 @@ struct NodeGraphView: View {
                         )
                         .position(x: node.positionX, y: node.positionY)
                         .gesture(
-                            DragGesture()
+                            DragGesture(minimumDistance: 5)
                                 .onChanged { value in
+                                    draggingNode = node
                                     if connectingFrom != nil {
                                         connectionEndPoint = value.location
                                     } else {
-                                        viewModel.updateNodePosition(
-                                            node,
-                                            x: value.location.x,
-                                            y: value.location.y,
-                                            context: context
-                                        )
-                                        // Update local state
                                         if let idx = nodes.firstIndex(where: { $0.id == node.id }) {
                                             nodes[idx].positionX = value.location.x
                                             nodes[idx].positionY = value.location.y
@@ -84,14 +102,21 @@ struct NodeGraphView: View {
                                     }
                                 }
                                 .onEnded { value in
+                                    draggingNode = nil
                                     if let from = connectingFrom {
-                                        // Check if we dropped on a node
                                         if let target = findNode(near: value.location), target.id != from.id {
                                             viewModel.connectNodes(from, to: target, context: context)
                                             refreshNodes()
                                         }
                                         connectingFrom = nil
                                         connectionEndPoint = nil
+                                    } else {
+                                        viewModel.updateNodePosition(
+                                            node,
+                                            x: value.location.x,
+                                            y: value.location.y,
+                                            context: context
+                                        )
                                     }
                                 }
                         )
@@ -115,6 +140,9 @@ struct NodeGraphView: View {
                 }
                 .offset(canvasOffset)
                 .scaleEffect(canvasScale)
+                
+                
+                
                 VStack {
                     Spacer()
                     bottomToolbar
@@ -163,26 +191,19 @@ struct NodeGraphView: View {
                     .presentationDetents([.medium])
                 }
             }
-            .gesture(
-                MagnifyGesture()
-                    .onChanged { value in
-                        canvasScale = max(0.3, min(value.magnification, 3.0))
-                    }
-            )
-            .simultaneousGesture(
-                DragGesture()
-                    .onChanged { value in
-                        if selectedNode == nil && connectingFrom == nil {
-                            canvasOffset = CGSize(
-                                width: lastDragOffset.width + value.translation.width,
-                                height: lastDragOffset.height + value.translation.height
-                            )
+            .sheet(isPresented: $showConnections) {
+                if let node = selectedNode {
+                    ConnectionsListSheet(
+                        node: node,
+                        allNodes: nodes,
+                        onDisconnect: { targetNode in
+                            viewModel.disconnectNodes(node, from: targetNode, context: context)
+                            refreshNodes()
                         }
-                    }
-                    .onEnded { _ in
-                        lastDragOffset = canvasOffset
-                    }
-            )
+                    )
+                    .presentationDetents([.medium])
+                }
+            }
             .onAppear {
                 refreshNodes()
             }
@@ -221,19 +242,50 @@ struct NodeGraphView: View {
             Button {
                 addNodeAtCenter()
             } label: {
-                Label("Add", systemImage: "plus.circle.fill")
+                Label("", systemImage: "plus.circle.fill")
                     .font(.subheadline)
                     .fontWeight(.semibold)
             }
             
-            if selectedNode != nil {
+            if let selected = selectedNode {
                 Button {
-                    connectingFrom = selectedNode
+                    connectingFrom = selected
                 } label: {
-                    Label("Connect", systemImage: "link")
+                    Label("", systemImage: "link")
                         .font(.subheadline)
                 }
                 .tint(.purple)
+                
+                Button {
+                    showConnections = true
+                } label: {
+                    HStack(spacing: 3) {
+                        Image(systemName: "link.badge.plus")
+                        Text("\(selected.connectedNodeIDs.count)")
+                    }
+                    .font(.subheadline)
+                }
+                .tint(.orange)
+                .disabled(selected.connectedNodeIDs.isEmpty)
+                
+                Button {
+                    editingNode = selected
+                    showNodeEditor = true
+                } label: {
+                    Label("", systemImage: "pencil")
+                        .font(.subheadline)
+                }
+                .tint(.blue)
+                
+                Button {
+                    viewModel.deleteNode(selected, allNodes: nodes, context: context)
+                    selectedNode = nil
+                    refreshNodes()
+                } label: {
+                    Label("", systemImage: "trash")
+                        .font(.subheadline)
+                }
+                .tint(.red)
             }
             
             if connectingFrom != nil {
@@ -241,7 +293,7 @@ struct NodeGraphView: View {
                     connectingFrom = nil
                     connectionEndPoint = nil
                 } label: {
-                    Label("Cancel", systemImage: "xmark")
+                    Label("", systemImage: "xmark")
                         .font(.subheadline)
                 }
                 .tint(.red)
@@ -456,6 +508,80 @@ struct NodeEditorSheet: View {
                         dismiss()
                     }
                     .disabled(label.isEmpty)
+                }
+            }
+        }
+    }
+}
+
+struct ConnectionsListSheet: View {
+    let node: NoteNode
+    let allNodes: [NoteNode]
+    let onDisconnect: (NoteNode) -> Void
+    @Environment(\.dismiss) private var dismiss
+    
+    var connectedNodes: [NoteNode] {
+        allNodes.filter { node.connectedNodeIDs.contains($0.id) }
+    }
+    
+    var body: some View {
+        NavigationStack {
+            Group {
+                if connectedNodes.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: "link.badge.plus")
+                            .font(.title)
+                            .foregroundStyle(.tertiary)
+                        Text("No connections")
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    List {
+                        ForEach(connectedNodes) { target in
+                            HStack {
+                                Circle()
+                                    .fill(Color(hex: target.colorHex) ?? .purple)
+                                    .frame(width: 10, height: 10)
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(target.label)
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                    
+                                    if !target.content.isEmpty {
+                                        Text(target.content)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .lineLimit(1)
+                                    }
+                                }
+                                
+                                Spacer()
+                                
+                                Button(role: .destructive) {
+                                    onDisconnect(target)
+                                    if connectedNodes.count <= 1 {
+                                        dismiss()
+                                    }
+                                } label: {
+                                    Image(systemName: "link.badge.plus")
+                                        .symbolRenderingMode(.palette)
+                                        .foregroundStyle(.red, .red)
+                                        .rotationEffect(.degrees(45))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Connections from \"\(node.label)\"")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
                 }
             }
         }
